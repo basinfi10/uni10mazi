@@ -577,6 +577,7 @@ const App: React.FC = () => {
             // 백그라운드에서 초기 인사 지시 전송 (웹소켓 연결 및 준비 시간을 위해 충분한 지연 추가)
             setTimeout(() => {
                 if (liveClientRef.current) {
+                    showToast("안녕하세요 마지입니다.", 'info');
                     liveClientRef.current.sendText('사용자가 접속했습니다. "안녕하세요 마지입니다. 무엇을 함께 할까요"라고 친절하게 먼저 인사해주세요.');
                 }
             }, 2500);
@@ -1055,7 +1056,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.0.0
+                                MAZI AI v2.0.1
                             </h1>
                         </div>
                     </div>
@@ -1109,7 +1110,7 @@ const App: React.FC = () => {
                             {messages.length === 0 ? (
                                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                     <div className="mb-6"><MaziLogo /></div>
-                                    <span className="text-[10px] text-gray-500 font-medium">v2.0.0</span>
+                                    <span className="text-[10px] text-gray-500 font-medium">v2.0.1</span>
                                     <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                     <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                                 </div>

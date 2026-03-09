@@ -349,8 +349,8 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                         <button
                           onClick={() => { onSelectSession(session.id); checkMobileAndClose(); }}
                           className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-all flex items-center gap-3 group/btn relative overflow-hidden ${currentSessionId === session.id
-                              ? 'bg-[#252525] text-white font-medium border-l-2 border-emerald-500 shadow-md'
-                              : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                            ? 'bg-[#252525] text-white font-medium border-l-2 border-emerald-500 shadow-md'
+                            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
                             }`}
                         >
                           <MessageSquare size={14} className={`flex-shrink-0 transition-colors ${currentSessionId === session.id ? 'text-emerald-400' : 'text-gray-600 group-hover/btn:text-gray-400'}`} />
@@ -416,7 +416,7 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
           설정
         </button>
         <div className="pt-2 text-[10px] text-gray-600 text-center">
-          v2.0.0 (Auto-start Live)
+          v2.0.1 (Auto-start Live)
         </div>
       </div>
     </aside>
