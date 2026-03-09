@@ -587,12 +587,28 @@ const App: React.FC = () => {
     }, [isOnline, stopLiveSession, startLiveAudioStream, handleLiveTranscript]);
 
     const checkMicPermission = async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showToast("마이크 접근이 지원되지 않는 브라우저입니다.", 'error');
+            return false;
+        }
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 브라우저 정책으로 인해 자동 시작 시 차단될 수 있으므로 타임아웃 처리
+            const stream = await Promise.race([
+                navigator.mediaDevices.getUserMedia({ audio: true }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+            ]) as MediaStream;
+
             stream.getTracks().forEach(track => track.stop());
             return true;
-        } catch (e) {
-            showToast("마이크 권한이 필요합니다.", 'error');
+        } catch (e: any) {
+            console.error("Mic Permission Error:", e);
+            if (e.message === "Timeout") {
+                showToast("마이크 권한 요청이 응답하지 않습니다. 주소창 설정을 확인하거나 화면을 클릭해 보세요.", 'info');
+            } else if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                showToast("마이크 권한이 거부되었습니다. 권한을 허용해 주세요.", 'error');
+            } else {
+                showToast("마이크 권한이 필요합니다.", 'error');
+            }
             return false;
         }
     };
@@ -604,11 +620,18 @@ const App: React.FC = () => {
         const autoStart = async () => {
             if (aiModelRef.current === 'live') {
                 showToast("마지를 불러오고 있습니다...", 'info');
-                const hasPermission = await checkMicPermission();
-                if (hasPermission) {
-                    await initAudioContext(); // 오디오 컨택스트 웜업
-                    showToast("안녕하세요 마지입니다.", 'info');
-                    startLiveSession();
+                try {
+                    const hasPermission = await checkMicPermission();
+                    if (hasPermission) {
+                        try {
+                            await initAudioContext(); // 오디오 컨택스트 웜업
+                        } catch (ae) { console.warn("AudioContext warmup failed", ae); }
+
+                        showToast("안녕하세요 마지입니다.", 'info');
+                        startLiveSession();
+                    }
+                } catch (err) {
+                    console.error("AutoStart failed:", err);
                 }
             }
         };
