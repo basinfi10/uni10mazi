@@ -597,22 +597,22 @@ const App: React.FC = () => {
             return false;
         }
         try {
-            // 브라우저 정책으로 인해 자동 시작 시 차단될 수 있으므로 타임아웃 처리
+            // 브라우저 정책으로 인해 자동 시작 시 차단될 수 있으므로 짧은 타임아웃 처리
             const stream = await Promise.race([
                 navigator.mediaDevices.getUserMedia({ audio: true }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000))
             ]) as MediaStream;
 
             stream.getTracks().forEach(track => track.stop());
             return true;
         } catch (e: any) {
-            console.error("Mic Permission Error:", e);
+            console.warn("Mic Permission Check Error:", e);
             if (e.message === "Timeout") {
-                showToast("마이크 권한 요청이 응답하지 않습니다. 주소창 설정을 확인하거나 화면을 클릭해 보세요.", 'info');
-            } else if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-                showToast("마이크 권한이 거부되었습니다. 권한을 허용해 주세요.", 'error');
-            } else {
-                showToast("마이크 권한이 필요합니다.", 'error');
+                // 타임아웃은 보통 사용자가 팝업을 못 봤거나 브라우저가 막은 경우
+                return false;
+            }
+            if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                showToast("마이크 권한이 거부된 상태입니다. 주소창 설정을 확인해 주세요.", 'error');
             }
             return false;
         }
@@ -624,26 +624,27 @@ const App: React.FC = () => {
 
         const autoStart = async () => {
             if (aiModelRef.current === 'live') {
-                showToast("마지를 불러오고 있습니다...", 'info');
+                // 1. 즉시 인사 팝업 (가장 중요한 피드백)
+                showToast("안녕하세요 마지입니다. (준비 중...)", 'info');
+
                 try {
-                    // 오디오 컨택스트 웜업
-                    try {
-                        await initAudioContext();
-                    } catch (ae) { console.warn("AudioContext warmup failed", ae); }
+                    // 2. 오디오 웜업 (비동기, 결과 기다리지 않음)
+                    initAudioContext().catch(() => { });
 
-                    // 인사말이 먼저 나갈 수 있도록 세션 연결 즉시 시작
-                    startLiveSession();
-
-                    // 마이크 권한은 별도로 체크하여 안내 제공
+                    // 3. 마이크 권한 체크 (짧은 타임아웃)
                     const hasPermission = await checkMicPermission();
-                    if (!hasPermission) {
-                        // startLiveSession 내부에서도 처리하지만 이중 보장
-                        console.log("Auto-start mic check: not available");
+
+                    if (hasPermission) {
+                        showToast("연결을 시작합니다.", 'info');
+                        startLiveSession();
                     } else {
-                        showToast("안녕하세요 마지입니다.", 'info');
+                        // 권한이 없거나 타임아웃인 경우에도 일단 세션을 시도 (음성이라도 들릴 수 있게)
+                        // 단, 마이크를 켜라는 강한 안내를 보냄
+                        showToast("마이크가 꺼져있습니다. 화면을 클릭하거나 마이크를 켜주세요.", 'error');
+                        startLiveSession();
                     }
                 } catch (err) {
-                    console.error("AutoStart failed:", err);
+                    console.error("AutoStart sequence failed:", err);
                 }
             }
         };
@@ -1092,7 +1093,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.02
+                                MAZI AI v2.03
                             </h1>
                         </div>
                     </div>
@@ -1146,7 +1147,7 @@ const App: React.FC = () => {
                             {messages.length === 0 ? (
                                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                     <div className="mb-6"><MaziLogo /></div>
-                                    <span className="text-[10px] text-gray-500 font-medium">v2.02</span>
+                                    <span className="text-[10px] text-gray-500 font-medium">v2.03</span>
                                     <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                     <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                                 </div>
