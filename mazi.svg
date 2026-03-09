@@ -1,0 +1,35 @@
+
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="maziGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <g stroke-width="14" stroke-linecap="square" stroke-linejoin="miter">
+      <!-- m: Blue Gradient (Lowercase shape, Uppercase height) -->
+      <!-- Left Stem: 40,90 -> 40,25 -->
+      <!-- Middle Stem: 105,90 -> 105,25 -->
+      <!-- Right Stem: 170,90 -> 170,25 -->
+      <!-- Top Bars: 40,25->105,25 and 105,25->170,25 -->
+      <path d="M40 90 V 25 H 105 V 90 M 105 25 H 170 V 90" stroke="url(#maziGradient)" fill="none" />
+      
+      <!-- A (Inverted V): Bright Yellow #fef08a -->
+      <!-- Raised by 2px: 93->91, 28->26 (Preserved from previous step) -->
+      <path d="M195 91 L 230 26 L 265 91" stroke="#fef08a" filter="url(#glow)" />
+      
+      <!-- Z: Blue Gradient (Capital) -->
+      <path d="M290 25 H 340 L 290 90 H 340" stroke="url(#maziGradient)" />
+      
+      <!-- i: Bright Yellow #fef08a (Size maintained) -->
+      <!-- Taller Stem (26 instead of 22 - moves top down) -->
+      <!-- Larger Dot (r=8.5 instead of 9, cy=8 instead of 5) -->
+      <path d="M370 26 V 90" stroke="#fef08a" stroke-linecap="butt" filter="url(#glow)" />
+      <circle cx="370" cy="8" r="8.5" fill="#fef08a" filter="url(#glow)" stroke="none" />
+  </g>
+</svg>
