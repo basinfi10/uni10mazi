@@ -445,6 +445,9 @@ const App: React.FC = () => {
                 ctx = new AudioContextClass();
             }
             liveAudioContextRef.current = ctx;
+            if (ctx.state === 'suspended') {
+                await ctx.resume();
+            }
 
             const constraints: MediaTrackConstraints = {
                 channelCount: 1,
@@ -571,12 +574,12 @@ const App: React.FC = () => {
             await startLiveAudioStream(client);
             showToast("Live 세션이 연결되었습니다. 말씀하세요.");
 
-            // 백그라운드에서 초기 인사 지시 전송 (웹소켓 연결 및 준비 시간을 위해 약간의 지연 추가)
+            // 백그라운드에서 초기 인사 지시 전송 (웹소켓 연결 및 준비 시간을 위해 충분한 지연 추가)
             setTimeout(() => {
                 if (liveClientRef.current) {
-                    liveClientRef.current.sendText('사용자가 접속했습니다. "안녕하세요 마지입니다. 무엇을 함께 할까요"라고 먼저 인사해주세요.');
+                    liveClientRef.current.sendText('사용자가 접속했습니다. "안녕하세요 마지입니다. 무엇을 함께 할까요"라고 친절하게 먼저 인사해주세요.');
                 }
-            }, 1500);
+            }, 2500);
         } catch (e: any) {
             showToast("Live 연결 실패: " + e.message, 'error');
             stopLiveSession();
@@ -602,6 +605,7 @@ const App: React.FC = () => {
             if (aiModelRef.current === 'live') {
                 const hasPermission = await checkMicPermission();
                 if (hasPermission) {
+                    await initAudioContext(); // 오디오 컨텍스트 웜업
                     startLiveSession();
                 }
             }
@@ -1051,7 +1055,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v1.9.6
+                                MAZI AI v2.0.0
                             </h1>
                         </div>
                     </div>
