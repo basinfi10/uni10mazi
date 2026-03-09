@@ -1,7 +1,7 @@
 {
   "name": "mazi-ai-v2",
   "private": true,
-  "version": "2.01",
+  "version": "2.02",
   "type": "module",
   "scripts": {
     "dev": "vite",

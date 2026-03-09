@@ -571,8 +571,13 @@ const App: React.FC = () => {
                 },
                 handleLiveTranscript
             );
-            await startLiveAudioStream(client);
-            showToast("Live 세션이 연결되었습니다. 말씀하세요.");
+            try {
+                await startLiveAudioStream(client);
+                showToast("Live 세션이 연결되었습니다. 말씀하세요.");
+            } catch (micErr: any) {
+                console.warn("Initial mic capture failed:", micErr);
+                showToast("마이크를 사용할 수 없습니다. 대화를 위해 마이크 권한을 허용해 주세요.", 'info');
+            }
 
             // 백그라운드에서 초기 인사 지시 전송 (웹소켓 연결 및 준비 시간을 위해 충분한 지연 추가)
             setTimeout(() => {
@@ -621,14 +626,21 @@ const App: React.FC = () => {
             if (aiModelRef.current === 'live') {
                 showToast("마지를 불러오고 있습니다...", 'info');
                 try {
-                    const hasPermission = await checkMicPermission();
-                    if (hasPermission) {
-                        try {
-                            await initAudioContext(); // 오디오 컨택스트 웜업
-                        } catch (ae) { console.warn("AudioContext warmup failed", ae); }
+                    // 오디오 컨택스트 웜업
+                    try {
+                        await initAudioContext();
+                    } catch (ae) { console.warn("AudioContext warmup failed", ae); }
 
+                    // 인사말이 먼저 나갈 수 있도록 세션 연결 즉시 시작
+                    startLiveSession();
+
+                    // 마이크 권한은 별도로 체크하여 안내 제공
+                    const hasPermission = await checkMicPermission();
+                    if (!hasPermission) {
+                        // startLiveSession 내부에서도 처리하지만 이중 보장
+                        console.log("Auto-start mic check: not available");
+                    } else {
                         showToast("안녕하세요 마지입니다.", 'info');
-                        startLiveSession();
                     }
                 } catch (err) {
                     console.error("AutoStart failed:", err);
@@ -1080,7 +1092,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.01
+                                MAZI AI v2.02
                             </h1>
                         </div>
                     </div>
@@ -1134,7 +1146,7 @@ const App: React.FC = () => {
                             {messages.length === 0 ? (
                                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                     <div className="mb-6"><MaziLogo /></div>
-                                    <span className="text-[10px] text-gray-500 font-medium">v2.01</span>
+                                    <span className="text-[10px] text-gray-500 font-medium">v2.02</span>
                                     <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                     <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                                 </div>
