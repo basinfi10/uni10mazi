@@ -5,11 +5,20 @@ import { float32ToPCMBase64, resetPCMStream, stopAudio } from "../utils/audio";
 
 let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
+let customUserApiKey: string = "";
 
-const MODEL_NAME = 'gemini-2.5-flash';
-const TTS_MODEL_NAME = 'gemini-2.5-flash-preview-tts';
+export const setUserApiKey = (key: string) => {
+  if (customUserApiKey !== key) {
+    customUserApiKey = key;
+    ai = null; // Force client re-initialization
+    chatSession = null;
+  }
+};
+
+const MODEL_NAME = 'gemini-2.0-flash';
+const TTS_MODEL_NAME = 'gemini-2.0-flash-lite-preview-0925'; // Or similar TTS optimized model
 // Real-time audio model
-const LIVE_MODEL_NAME = 'gemini-2.5-flash-native-audio-preview-12-2025';
+const LIVE_MODEL_NAME = 'gemini-2.0-flash-exp';
 
 const DEFAULT_SYSTEM_INSTRUCTION = `
 당신의 이름은 '마지(Mazi)'입니다.
@@ -52,12 +61,17 @@ const getAIClient = (): GoogleGenAI => {
         '';
     }
 
+    // 3. Fallback to user-provided key in settings
+    if (!apiKey) {
+      apiKey = customUserApiKey;
+    }
+
     // Clean and validate
     apiKey = apiKey.trim();
 
     // Check for "undefined" string literal which can happen in some build replacements
     if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
-      throw new Error("API 키가 설정되지 않았습니다. Vercel 환경 변수 이름을 'VITE_GEMINI_API_KEY'로 변경하고 재배포해주세요.");
+      throw new Error("API 키가 설정되지 않았습니다. 설정에서 개인 API 키를 입력하거나, 서버 환경 변수(VITE_GEMINI_API_KEY)를 확인해주세요.");
     }
 
     ai = new GoogleGenAI({ apiKey });

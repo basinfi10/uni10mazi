@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Mic, Menu, Sparkles, Volume2, VolumeX, MicOff, AlertCircle, Loader2, AudioLines, MessageCircle, Zap, WifiOff, Radio, LayoutGrid, ChevronUp } from 'lucide-react';
 import { Message, Source, ChatSession, AudioSettings } from './types';
-import { initializeChat, sendMessageStream, generateSpeech, LiveClient } from './services/geminiService';
+import { initializeChat, sendMessageStream, generateSpeech, LiveClient, setUserApiKey } from './services/geminiService';
 import { stopAudio, enqueueAudio, enqueueSilence, clearAudioQueue, setPlayStateCallback, resetPCMStream, initAudioContext, setAudioErrorCallback, getAudioContextState, playWakeSound, playPCMChunk, getAudioContext, setSmartTVMode, setGlobalOutputSampleRate, resetAudioContext, downloadWav, setGlobalOutputVolume, setDigitalLimiterEnabled } from './utils/audio';
 import MessageBubble from './components/MessageBubble';
 import TypingIndicator from './components/TypingIndicator';
@@ -84,6 +84,7 @@ const App: React.FC = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string, type: 'error' | 'info' } | null>(null);
     const [isConfigError, setIsConfigError] = useState(false);
+    const [userApiKey, setUserApiKeyLocal] = useState('');
     const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
     const [aiModel, setAiModel] = useState<AIModelType>('live');
@@ -246,6 +247,12 @@ const App: React.FC = () => {
                 setAudioSettings(prev => ({ ...prev, outputSampleRate: 48000 }));
             }
 
+            const savedApiKey = localStorage.getItem('userApiKey');
+            if (savedApiKey) {
+                setUserApiKeyLocal(savedApiKey);
+                setUserApiKey(savedApiKey);
+            }
+
             setCurrentSessionId(null);
         } catch (e) {
             console.error("Failed to load history/settings", e);
@@ -264,6 +271,16 @@ const App: React.FC = () => {
             localStorage.setItem('chatSessions', JSON.stringify(sessionsToSave));
         }
     }, [sessions, isHistoryEnabled]);
+
+    useEffect(() => {
+        localStorage.setItem('userApiKey', userApiKey);
+        setUserApiKey(userApiKey);
+        // If API key is set, try to clear config error if it was a key issue
+        if (userApiKey && isConfigError) {
+            const isInit = initializeChat();
+            if (isInit) setIsConfigError(false);
+        }
+    }, [userApiKey]);
 
     useEffect(() => {
         localStorage.setItem('isHistoryEnabled', String(isHistoryEnabled));
@@ -1119,7 +1136,7 @@ const App: React.FC = () => {
                     </div>
                 </header>
 
-                {isConfigError && <div className="bg-red-900/20 border-b border-red-900/50 p-2 text-center text-xs text-red-200 flex items-center justify-center gap-2"><AlertCircle size={14} /><span>API 키 설정 오류. Vercel 환경 변수(VITE_API_KEY)를 확인해주세요.</span></div>}
+                {isConfigError && <div className="bg-red-900/20 border-b border-red-900/50 p-2 text-center text-xs text-red-200 flex items-center justify-center gap-2"><AlertCircle size={14} /><span>AI 엔진 초기화 실패. 설정에서 API 키를 입력하거나 서버 환경 변수(VITE_GEMINI_API_KEY)를 확인해주세요.</span></div>}
                 {aiModel === 'live' && audioSettings.showDebugInfo && (
                     <DebugOverlay rms={debugRms} threshold={debugThreshold} isGateOpen={debugGateOpen} isAiSpeaking={isAiSpeaking} aecEnabled={audioSettings.echoCancellation} outputVolume={audioSettings.outputVolume} outputSampleRate={audioSettings.outputSampleRate} />
                 )}
@@ -1193,7 +1210,7 @@ const App: React.FC = () => {
                     </div>
                 </div>
                 {toast && <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-xl border text-sm animate-in fade-in slide-in-from-top-2 z-50 ${toast.type === 'error' ? 'bg-red-900/90 border-red-800 text-white' : 'bg-gray-800/90 border-gray-700 text-white'}`}>{toast.message}</div>}
-                <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} selectedVoice={currentVoice} onVoiceChange={setCurrentVoice} isHistoryEnabled={isHistoryEnabled} onHistoryEnabledChange={setIsHistoryEnabled} onFactoryReset={handleFactoryReset} aiModel={aiModel} onAiModelChange={handleAiModelChange} audioSettings={audioSettings} onAudioSettingsChange={setAudioSettings} />
+                <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} selectedVoice={currentVoice} onVoiceChange={setCurrentVoice} isHistoryEnabled={isHistoryEnabled} onHistoryEnabledChange={setIsHistoryEnabled} apiKey={userApiKey} onApiKeyChange={setUserApiKeyLocal} aiModel={aiModel} onAiModelChange={handleAiModelChange} audioSettings={audioSettings} onAudioSettingsChange={setAudioSettings} />
             </div>
         </div>
     );

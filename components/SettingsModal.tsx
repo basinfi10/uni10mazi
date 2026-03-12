@@ -11,7 +11,8 @@ interface SettingsModalProps {
   onVoiceChange: (voice: string) => void;
   isHistoryEnabled: boolean;
   onHistoryEnabledChange: (enabled: boolean) => void;
-  onFactoryReset: () => void;
+  apiKey: string;
+  onApiKeyChange: (key: string) => void;
   aiModel: 'standard' | 'live';
   onAiModelChange: (model: 'standard' | 'live') => void;
   audioSettings: AudioSettings;
@@ -33,7 +34,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onVoiceChange,
   isHistoryEnabled,
   onHistoryEnabledChange,
-  onFactoryReset,
+  apiKey,
+  onApiKeyChange,
   aiModel,
   onAiModelChange,
   audioSettings,
@@ -118,7 +120,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <Cpu size={24} />
                         <div className="text-center">
                             <span className="block text-sm font-bold">Standard</span>
-                            <span className="block text-[10px] opacity-70">Gemini 2.5 Flash<br/>(안정적/TTS)</span>
+                            <span className="block text-[10px] opacity-70">Gemini 2.0 Flash<br/>(안정적/TTS)</span>
                         </div>
                         {aiModel === 'standard' && <Check size={16} className="mt-1" />}
                     </button>
@@ -134,7 +136,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <Zap size={24} />
                         <div className="text-center">
                             <span className="block text-sm font-bold">Live</span>
-                            <span className="block text-[10px] opacity-70">Realtime API<br/>(실시간 대화)</span>
+                            <span className="block text-[10px] opacity-70">Gemini 2.0 Flash-Exp<br/>(실시간 대화)</span>
                         </div>
                         {aiModel === 'live' && <Check size={16} className="mt-1" />}
                     </button>
@@ -200,28 +202,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
 
-                {/* Danger Zone */}
+                {/* API Key Setting */}
                 <div>
-                    <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <AlertTriangle size={14} />
-                    초기화 (Danger Zone)
+                    <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <ZapIcon size={14} />
+                    Gemini API 설정
                     </h3>
-                    <div className="p-4 rounded-xl border border-red-900/30 bg-red-900/10">
+                    <div className="p-4 rounded-xl border border-emerald-900/30 bg-emerald-900/10">
                         <p className="text-xs text-gray-300 mb-4 leading-relaxed">
-                        앱이 동작하지 않거나 설정을 초기 상태로 되돌리고 싶을 때 사용하세요.<br/>
-                        <span className="text-red-400 font-bold">주의: 모든 대화 기록과 설정이 삭제됩니다.</span>
+                        개인 Gemini API 키를 입력하여 사용하세요.<br/>
+                        <span className="text-emerald-400 font-medium">설정 시 서버 환경변수보다 우선적으로 사용됩니다.</span>
                         </p>
-                        <button 
-                        onClick={() => {
-                            if(window.confirm("정말로 앱을 초기화하시겠습니까? 모든 데이터가 삭제됩니다.")) {
-                                onFactoryReset();
-                            }
-                        }}
-                        className="w-full py-2.5 bg-red-900/50 hover:bg-red-800 border border-red-700 text-red-200 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                        >
-                        <RefreshCw size={16} />
-                        앱 초기화 (Factory Reset)
-                        </button>
+                        <div className="relative">
+                            <input 
+                                type="password"
+                                value={apiKey}
+                                onChange={(e) => onApiKeyChange(e.target.value)}
+                                placeholder="API 키를 입력하세요"
+                                className="w-full bg-[#1a1a1a] border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition-colors"
+                            />
+                        </div>
                     </div>
                 </div>
               </>
