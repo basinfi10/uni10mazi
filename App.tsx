@@ -624,15 +624,8 @@ const App: React.FC = () => {
 
         const autoStart = async () => {
             if (aiModelRef.current === 'live') {
-                // 1. 초기 인사 메시지 추가
-                const welcomeMsg: Message = {
-                    id: 'welcome-' + Date.now(),
-                    role: 'model',
-                    text: "안녕하세요 마지 입니다. 무엇을 함께 할까요",
-                    timestamp: new Date(),
-                    type: 'welcome'
-                };
-                setMessages(prev => [welcomeMsg, ...prev]);
+                // 1. 초기 인사 팝업 (가장 중요한 피드백)
+                showToast("안녕하세요🎵 마지입니다. 무엇을 함께 할까요?", 'info');
 
                 try {
                     // 2. 오디오 웜업
@@ -645,17 +638,8 @@ const App: React.FC = () => {
                         showToast("연결을 시작합니다.", 'info');
                         startLiveSession();
                     } else {
-                        // 마이크 경고 메시지 추가
-                        const warningMsg: Message = {
-                            id: 'mic-warning-' + Date.now(),
-                            role: 'model',
-                            text: "마이크가 켜지지 않았습니다. 대화를 원하시면 마이크를 켜세요",
-                            timestamp: new Date(),
-                            type: 'warning'
-                        };
-                        setMessages(prev => [...prev, warningMsg]);
-
-                        showToast("마이크가 꺼져있습니다. 마이크를 켜주세요.", 'error');
+                        // 마이크 경고 팝업
+                        showToast("마이크가 켜지지 않았습니다. 대화를 원하시면 마이크를 켜세요", 'error');
                         startLiveSession();
                     }
                 } catch (err) {
