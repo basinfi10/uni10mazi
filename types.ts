@@ -12,6 +12,7 @@ export interface Message {
   isStreaming?: boolean;
   sources?: Source[];
   audioData?: string; // Base64 PCM data for caching & download
+  type?: 'welcome' | 'warning';
 }
 
 export interface ChatSession {

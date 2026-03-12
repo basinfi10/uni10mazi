@@ -624,23 +624,38 @@ const App: React.FC = () => {
 
         const autoStart = async () => {
             if (aiModelRef.current === 'live') {
-                // 1. 즉시 인사 팝업 (가장 중요한 피드백)
-                showToast("안녕하세요 마지입니다. (준비 중...)", 'info');
+                // 1. 초기 인사 메시지 추가
+                const welcomeMsg: Message = {
+                    id: 'welcome-' + Date.now(),
+                    role: 'model',
+                    text: "안녕하세요 마지 입니다. 무엇을 함께 할까요",
+                    timestamp: new Date(),
+                    type: 'welcome'
+                };
+                setMessages(prev => [welcomeMsg, ...prev]);
 
                 try {
-                    // 2. 오디오 웜업 (비동기, 결과 기다리지 않음)
+                    // 2. 오디오 웜업
                     initAudioContext().catch(() => { });
 
-                    // 3. 마이크 권한 체크 (짧은 타임아웃)
+                    // 3. 마이크 권한 체크
                     const hasPermission = await checkMicPermission();
 
                     if (hasPermission) {
                         showToast("연결을 시작합니다.", 'info');
                         startLiveSession();
                     } else {
-                        // 권한이 없거나 타임아웃인 경우에도 일단 세션을 시도 (음성이라도 들릴 수 있게)
-                        // 단, 마이크를 켜라는 강한 안내를 보냄
-                        showToast("마이크가 꺼져있습니다. 화면을 클릭하거나 마이크를 켜주세요.", 'error');
+                        // 마이크 경고 메시지 추가
+                        const warningMsg: Message = {
+                            id: 'mic-warning-' + Date.now(),
+                            role: 'model',
+                            text: "마이크가 켜지지 않았습니다. 대화를 원하시면 마이크를 켜세요",
+                            timestamp: new Date(),
+                            type: 'warning'
+                        };
+                        setMessages(prev => [...prev, warningMsg]);
+                        
+                        showToast("마이크가 꺼져있습니다. 마이크를 켜주세요.", 'error');
                         startLiveSession();
                     }
                 } catch (err) {

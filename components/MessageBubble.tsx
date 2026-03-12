@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Message } from '../types';
-import { User, Sparkles, Play, Square, Loader2, Circle, Globe, Download } from 'lucide-react';
+import { User, Sparkles, Play, Square, Loader2, Circle, Globe, Download, AlertCircle } from 'lucide-react';
 import { TTSStatus } from '../App';
 
 interface MessageBubbleProps {
@@ -27,35 +27,30 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({
 }) => {
   const isUser = message.role === 'user';
   
+  const isWelcome = message.type === 'welcome';
+  const isWarning = message.type === 'warning';
+  
   // HIDE EMPTY MODEL MESSAGES (Waiting for stream to start)
   if (!isUser && !message.text && (!message.sources || message.sources.length === 0)) {
     return null;
   }
 
-  // Formatting helper with Title highlighting and **Text** coloring
+  // ... (formatText and parseInline same as before)
   const formatText = (text: string) => {
     return text.split('\n').map((line, i) => {
       const trimmed = line.trim();
-      
-      // Improved Heuristic for "Titles", "List Headers", "Speakers", or "Dialogue Headers"
-      // e.g., "Dialogue 1", "Dialogue:", "Customer:", "Barista:", "Step 1:"
       const isTitleLike = 
         /^[▣◈■•]/.test(trimmed) || 
         /^\d+\.\s/.test(trimmed) ||
-        // Check for specific script keywords followed by space or colon
         /^(Dialogue|Scene|Mission|Step|Scenario|Situation|Role|Part)(:|\s|$)/i.test(trimmed) ||
-        // Check for Speaker names (English/Korean) ending with colon, strictly short length
         (/^[\w\s가-힣]+:/.test(trimmed) && trimmed.length < 40);
 
-      // Process inline formatting (detect **text** for Sky Blue/Slate highlighting)
       const parseInline = (contentStr: string) => {
-        // Split by **...** pattern
         const parts = contentStr.split(/(\*\*.*?\*\*)/g);
         return parts.map((part, idx) => {
             if (part.startsWith('**') && part.endsWith('**')) {
-                // Remove the ** delimiters and apply Slate-300 (Blue Gray) style
                 return (
-                    <span key={idx} className="text-slate-300 font-semibold">
+                    <span key={idx} className={isWelcome ? "text-indigo-100 font-bold underline decoration-indigo-300/50" : "text-slate-300 font-semibold"}>
                         {part.slice(2, -2)}
                     </span>
                 );
@@ -65,8 +60,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({
       };
 
       const content = isTitleLike ? (
-        // Indigo-400 for headers/speakers to distinguish from English text
-        <span className="text-indigo-400 font-bold">{parseInline(line)}</span>
+        <span className={isWelcome ? "text-white font-bold" : "text-indigo-400 font-bold"}>{parseInline(line)}</span>
       ) : (
         <>{parseInline(line)}</>
       );
@@ -86,7 +80,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({
             return <Circle size={8} className="fill-emerald-500 text-emerald-500 animate-pulse" />;
         case 'loading':
             return <Circle size={8} className="fill-yellow-500 text-yellow-500 animate-bounce" />;
-        case 'suspended': // Red alert for silence issue
+        case 'suspended':
         case 'error':
             return <Circle size={8} className="fill-red-500 text-red-500" />;
         default:
@@ -105,26 +99,44 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({
   };
 
   return (
-    <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex max-w-[95%] md:max-w-[90%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-2`}>
+    <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'} ${isWelcome ? 'animate-in fade-in slide-in-from-bottom-4 duration-700' : ''}`}>
+      <div className={`flex max-w-[95%] md:max-w-[90%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
         
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isUser ? 'bg-blue-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md'}`}>
-          {isUser ? <User size={16} className="text-white" /> : (
-            <Sparkles size={16} className="text-white fill-white/20" />
+        <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+            isUser ? 'bg-blue-600' : 
+            isWelcome ? 'bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 shadow-[0_0_15px_rgba(168,85,247,0.5)] animate-pulse' :
+            isWarning ? 'bg-red-600 shadow-lg' :
+            'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md'
+        }`}>
+          {isUser ? <User size={18} className="text-white" /> : (
+            isWarning ? <AlertCircle size={18} className="text-white" /> :
+            <Sparkles size={18} className="text-white fill-white/20" />
           )}
         </div>
 
         {/* Bubble Column */}
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full`}>
           <div
-            className={`px-4 py-3 rounded-2xl shadow-sm text-sm md:text-base leading-relaxed break-words relative ${
+            className={`px-5 py-3.5 rounded-2xl shadow-sm text-sm md:text-base leading-relaxed break-words relative transition-all ${
               isUser
                 ? 'bg-blue-600 text-white rounded-tr-sm'
+                : isWelcome
+                ? 'bg-gradient-to-br from-indigo-600/90 to-blue-700/90 text-white border-none shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm rounded-tl-sm ring-1 ring-white/20'
+                : isWarning
+                ? 'bg-red-950/40 text-red-100 border border-red-500/30 rounded-tl-sm'
                 : 'bg-[#1E1E1E] text-gray-100 border border-gray-700 rounded-tl-sm'
             }`}
           >
-            {formatText(message.text)}
+            {isWelcome && (
+              <div className="flex items-center gap-2 mb-1.5 opacity-80 text-[10px] font-bold uppercase tracking-widest text-indigo-200">
+                <Sparkles size={10} className="fill-current" />
+                <span>Greeting from Mazi</span>
+              </div>
+            )}
+            <div className={isWelcome ? "font-medium" : ""}>
+                {formatText(message.text)}
+            </div>
             {message.isStreaming && (
               <span className="inline-block w-2 h-4 ml-1 align-middle bg-emerald-400 animate-pulse"></span>
             )}
