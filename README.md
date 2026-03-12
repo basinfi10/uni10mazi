@@ -1,4 +1,4 @@
-# 🌌 MAZI AI v2 (Multi-modal AI Zero Interface)
+# 🌌 MAZI AI v2.05 (Multi-modal AI Zero Interface)
 
 ![MAZI AI Logo](file:///c:/10Project/08_RyuWork/10TypeScript/mazi-ai-v2-main/public/logo192.png)
 
@@ -23,7 +23,7 @@ MAZI AI v2 is a cutting-edge, real-time AI conversation platform powered by **Go
 ### 2. Installation
 ```powershell
 # Clone the repository
-git clone https://github.com/Ilyoung102/mazi-ai-v2.git
+git clone https://github.com/basinfi10/uni10mazi.git
 
 # Navigate to the directory
 cd mazi-ai-v2
@@ -64,4 +64,4 @@ The project is optimized for deployment on **Vercel**.
 
 ---
 
-*Developed by Ilyoung102. Optimized for high-performance AI interactions.*
+*Developed by basinfi10. Optimized for high-performance AI interactions.*
