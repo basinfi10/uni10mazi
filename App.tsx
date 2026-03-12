@@ -654,7 +654,7 @@ const App: React.FC = () => {
                             type: 'warning'
                         };
                         setMessages(prev => [...prev, warningMsg]);
-                        
+
                         showToast("마이크가 꺼져있습니다. 마이크를 켜주세요.", 'error');
                         startLiveSession();
                     }
@@ -1108,7 +1108,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.03
+                                MAZI AI v2.04
                             </h1>
                         </div>
                     </div>
@@ -1140,10 +1140,32 @@ const App: React.FC = () => {
                     <DebugOverlay rms={debugRms} threshold={debugThreshold} isGateOpen={debugGateOpen} isAiSpeaking={isAiSpeaking} aecEnabled={audioSettings.echoCancellation} outputVolume={audioSettings.outputVolume} outputSampleRate={audioSettings.outputSampleRate} />
                 )}
 
-                <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#121212] relative">
+                 <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#121212] relative">
                     {isSidebarOpen && <div className="absolute inset-0 z-10 md:hidden bg-transparent" onClick={() => setIsSidebarOpen(false)} />}
-                    {aiModel === 'live' ? (
-                        <div className="absolute inset-0 p-4 pointer-events-none">
+                    
+                    {/* Message list - rendered always to show greeting and history */}
+                    <div className="max-w-4xl mx-auto flex flex-col min-h-full">
+                        {messages.length === 0 ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
+                                <div className="mb-6"><MaziLogo /></div>
+                                <span className="text-[10px] text-gray-500 font-medium">v2.04</span>
+                                <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
+                                <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
+                            </div>
+                        ) : (
+                            <>
+                                {messages.map((msg) => (
+                                    <MessageBubble key={msg.id} message={msg} isTTSActive={isTTSActive} isPlaying={playingMessageId === msg.id} isAudioLoading={playingMessageId === msg.id && isAudioLoading} ttsStatus={playingMessageId === msg.id ? ttsStatus : 'idle'} onPlay={handleManualPlay} onStop={handleManualStop} onDownload={handleDownloadAudio} />
+                                ))}
+                                {isLoading && <TypingIndicator />}
+                                <div ref={messagesEndRef} className="h-4" />
+                            </>
+                        )}
+                    </div>
+
+                    {/* Live mode visualizer - overlays the message area when active */}
+                    {aiModel === 'live' && (
+                        <div className="absolute inset-0 p-4 pointer-events-none flex items-center justify-center z-10">
                             <div
                                 className="w-full h-full pointer-events-auto cursor-pointer"
                                 onClick={() => {
@@ -1156,25 +1178,6 @@ const App: React.FC = () => {
                             >
                                 <LiveVisualizer userVolume={userVolume} isAiSpeaking={isAiSpeaking} isThinking={isLiveThinking} visualizerType={audioSettings.visualizerType} />
                             </div>
-                        </div>
-                    ) : (
-                        <div className="max-w-4xl mx-auto flex flex-col min-h-full">
-                            {messages.length === 0 ? (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
-                                    <div className="mb-6"><MaziLogo /></div>
-                                    <span className="text-[10px] text-gray-500 font-medium">v2.03</span>
-                                    <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
-                                    <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
-                                </div>
-                            ) : (
-                                <>
-                                    {messages.map((msg) => (
-                                        <MessageBubble key={msg.id} message={msg} isTTSActive={isTTSActive} isPlaying={playingMessageId === msg.id} isAudioLoading={playingMessageId === msg.id && isAudioLoading} ttsStatus={playingMessageId === msg.id ? ttsStatus : 'idle'} onPlay={handleManualPlay} onStop={handleManualStop} onDownload={handleDownloadAudio} />
-                                    ))}
-                                    {isLoading && <TypingIndicator />}
-                                    <div ref={messagesEndRef} className="h-4" />
-                                </>
-                            )}
                         </div>
                     )}
                 </main>

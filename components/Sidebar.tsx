@@ -416,7 +416,7 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
           설정
         </button>
         <div className="pt-2 text-[10px] text-gray-600 text-center">
-          v2.03 (Auto-start Live)
+          v2.04 (Auto-start Live)
         </div>
       </div>
     </aside>
