@@ -466,6 +466,9 @@ const App: React.FC = () => {
                 await ctx.resume();
             }
 
+            // [FIX] Guard: If context was closed while waiting for resume or previous cleanup
+            if (ctx.state === 'closed') return;
+
             const constraints: MediaTrackConstraints = {
                 channelCount: 1,
                 echoCancellation: config.echoCancellation,
@@ -485,6 +488,12 @@ const App: React.FC = () => {
             }
 
             liveMediaStreamRef.current = stream;
+
+            // [FIX] Guard: If stopLiveSession was called while waiting for getUserMedia
+            if (!liveAudioContextRef.current || liveAudioContextRef.current.state === 'closed') {
+                stream.getTracks().forEach(track => track.stop());
+                return;
+            }
 
             const source = ctx.createMediaStreamSource(stream);
             const processor = ctx.createScriptProcessor(4096, 1, 1);
@@ -543,7 +552,11 @@ const App: React.FC = () => {
             };
 
             source.connect(processor);
-            processor.connect(ctx.destination);
+            
+            // [FIX] Guard: Final check before connecting to destination
+            if (ctx.state !== 'closed') {
+                processor.connect(ctx.destination);
+            }
 
         } catch (e: any) {
             showToast("마이크 오류: " + (e.message || "알 수 없는 오류"), 'error');
@@ -563,11 +576,9 @@ const App: React.FC = () => {
     }, []);
 
     const startLiveSession = useCallback(async () => {
-        if (liveClientRef.current) return;
-        if (!isOnline) {
-            showToast("인터넷 연결을 확인해주세요.", 'error');
-            return;
-        }
+        if (isOnline && (this as any).isConnectingSession) return;
+        (this as any).isConnectingSession = true;
+
         stopLiveSession();
         const client = new LiveClient();
         liveClientRef.current = client;
@@ -605,6 +616,8 @@ const App: React.FC = () => {
         } catch (e: any) {
             showToast("Live 연결 실패: " + e.message, 'error');
             stopLiveSession();
+        } finally {
+            (this as any).isConnectingSession = false;
         }
     }, [isOnline, stopLiveSession, startLiveAudioStream, handleLiveTranscript]);
 
