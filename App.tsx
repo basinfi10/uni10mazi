@@ -106,7 +106,11 @@ const App: React.FC = () => {
     });
 
     const [userVolume, setUserVolume] = useState(0);
-    const [isLiveThinking, setIsLiveThinking] = useState(false);
+    const [isLiveThinking, setIsLiveThinkingState] = useState(false);
+    const setIsLiveThinking = useCallback((val: boolean) => {
+        setIsLiveThinkingState(val);
+        isLiveThinkingRef.current = val;
+    }, []);
 
     const [debugRms, setDebugRms] = useState(0);
     const [debugThreshold, setDebugThreshold] = useState(0);
@@ -142,6 +146,8 @@ const App: React.FC = () => {
     const wakeWordLockRef = useRef(false);
     const aiModelRef = useRef<AIModelType>('live');
     const isMicDetectedRef = useRef(false);
+    const isListeningRef = useRef(false);
+    const isConnectingSessionRef = useRef(false);
     const hasAutoStartedRef = useRef(false);
     const audioSettingsRef = useRef<AudioSettings>(audioSettings);
     const aiSpeakingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -154,6 +160,7 @@ const App: React.FC = () => {
     const liveScriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
     const liveMediaStreamRef = useRef<MediaStream | null>(null);
     const liveThinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isLiveThinkingRef = useRef(false);
 
     const STOP_KEYWORDS = ["그만", "멈춰", "스톱", "stop", "wait", "잠깐", "조용", "종료"];
 
@@ -444,6 +451,7 @@ const App: React.FC = () => {
         }
         stopLiveAudioStream();
         setIsListening(false);
+        isListeningRef.current = false;
         setIsMicInputDetected(false);
         setIsAiSpeaking(false);
         setIsLiveThinking(false);
@@ -539,7 +547,7 @@ const App: React.FC = () => {
                     client.sendAudioChunk(silenceBuffer, currentSampleRate);
                 }
 
-                if (!isAiSpeakingRef.current && !isLiveThinking && isListening && !isGateOpen) {
+                if (!isAiSpeakingRef.current && !isLiveThinkingRef.current && isListeningRef.current && !isGateOpen) {
                     if (!liveThinkingTimerRef.current) {
                         liveThinkingTimerRef.current = setTimeout(() => {
                             if (!isAiSpeakingRef.current) {
@@ -562,7 +570,7 @@ const App: React.FC = () => {
             showToast("마이크 오류: " + (e.message || "알 수 없는 오류"), 'error');
             stopLiveSession();
         }
-    }, [stopLiveSession, showToast, isListening, isLiveThinking]);
+    }, [stopLiveSession, showToast]);
 
     const handleLiveTranscript = useCallback((text: string, isModel: boolean) => {
         if (!isModel) {
@@ -576,14 +584,17 @@ const App: React.FC = () => {
     }, []);
 
     const startLiveSession = useCallback(async () => {
-        if (isOnline && (this as any).isConnectingSession) return;
-        (this as any).isConnectingSession = true;
+        if (isOnline && isConnectingSessionRef.current) return;
+        isConnectingSessionRef.current = true;
+        setIsMicChecking(true);
 
-        stopLiveSession();
-        const client = new LiveClient();
-        liveClientRef.current = client;
-        setIsListening(true);
         try {
+            stopLiveSession();
+            const client = new LiveClient();
+            liveClientRef.current = client;
+            
+            setIsListening(true);
+            isListeningRef.current = true;
             await client.connect(
                 (base64PCM) => {
                     setIsAiSpeaking(true);
@@ -614,10 +625,12 @@ const App: React.FC = () => {
                 }
             }, 2000);
         } catch (e: any) {
-            showToast("Live 연결 실패: " + e.message, 'error');
+            console.error("Live Session Start Error:", e);
+            showToast("Live 연결 실패: " + (e.message || "서버 응답 없음"), 'error');
             stopLiveSession();
         } finally {
-            (this as any).isConnectingSession = false;
+            isConnectingSessionRef.current = false;
+            setIsMicChecking(false);
         }
     }, [isOnline, stopLiveSession, startLiveAudioStream, handleLiveTranscript]);
 
@@ -714,15 +727,20 @@ const App: React.FC = () => {
 
     const toggleListening = async () => {
         // [FIX] Explicitly resume AudioContext to bypass browser auto-play restrictions
+        await initAudioContext();
         if (liveAudioContextRef.current && liveAudioContextRef.current.state === 'suspended') {
             await liveAudioContextRef.current.resume();
         }
 
         if (aiModel === 'live') {
-            if (isListening) stopLiveSession();
-            else {
+            if (isListening) {
+                stopLiveSession();
+            } else {
                 const hasPermission = await checkMicPermission();
-                if (hasPermission) startLiveSession();
+                if (hasPermission) {
+                    // startLiveSession internally sets isMicChecking
+                    await startLiveSession();
+                }
             }
             return;
         }
