@@ -16,9 +16,8 @@ export const setUserApiKey = (key: string) => {
 };
 
 const MODEL_NAME = 'gemini-2.0-flash';
-const TTS_MODEL_NAME = 'gemini-2.0-flash-lite-preview-0925'; // Or similar TTS optimized model
-// Real-time audio model
-const LIVE_MODEL_NAME = 'gemini-2.0-flash-exp';
+const TTS_MODEL_NAME = 'gemini-2.0-flash-lite-preview-0925'; 
+const LIVE_MODEL_NAME = 'gemini-2.0-flash';
 
 const DEFAULT_SYSTEM_INSTRUCTION = `
 당신의 이름은 '마지(Mazi)'입니다.
