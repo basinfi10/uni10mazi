@@ -738,6 +738,11 @@ const App: React.FC = () => {
     }, [showToast]);
 
     const toggleListening = async () => {
+        // [FIX] Explicitly resume AudioContext to bypass browser auto-play restrictions
+        if (liveAudioContextRef.current && liveAudioContextRef.current.state === 'suspended') {
+            await liveAudioContextRef.current.resume();
+        }
+
         if (aiModel === 'live') {
             if (isListening) stopLiveSession();
             else {
@@ -1213,9 +1218,9 @@ const App: React.FC = () => {
                         <div className={`flex-1 relative bg-[#2a2a2a] rounded-2xl border border-gray-700 flex items-end transition-colors ${cooldownSeconds > 0 || !isOnline ? 'opacity-50' : (aiModel === 'live' ? 'focus-within:border-purple-500/50' : 'focus-within:border-emerald-500/50')}`}>
                             <button onClick={toggleListening} disabled={cooldownSeconds > 0 || isMicChecking || !isOnline} className={`p-2 ml-1 my-1 rounded-xl transition-all flex items-center gap-1 ${(isListening || isContinuousMode) ? (aiModel === 'live' ? 'bg-purple-500/20 text-purple-400 animate-pulse' : (isWakeWordMode ? 'text-gray-100 hover:bg-gray-700' : 'bg-red-500/20 text-red-500 animate-pulse')) : 'text-gray-400 hover:text-white hover:bg-gray-700'} ${cooldownSeconds > 0 || !isOnline ? 'cursor-not-allowed' : ''}`}>
                                 <div className={`w-3 h-3 rounded-full mr-2 transition-all duration-200 ${isMicInputDetected ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,1)] animate-pulse' : 'bg-gray-700'}`} title={isMicInputDetected ? "소리 감지됨" : "소리 없음"} />
-                                {isMicChecking ? <Loader2 size={20} className="animate-spin text-gray-400" /> : ((isListening || isContinuousMode) ? (aiModel === 'live' ? <MicOff size={20} /> : (isWakeWordMode ? <Mic size={20} /> : <MicOff size={20} />)) : <Mic size={20} />)}
+                                {isMicChecking ? <Loader2 size={20} className="animate-spin text-gray-400" /> : ((isListening || isContinuousMode) ? <Mic size={20} /> : <MicOff size={20} />)}
                             </button>
-                            <textarea ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown} placeholder={!isOnline ? "인터넷 연결이 오프라인입니다." : cooldownSeconds > 0 ? `서비스 사용량 초과. ${cooldownSeconds}초 후 이용 가능합니다.` : (isMicChecking ? "오디오 연결 중..." : (aiModel === 'live' ? (isContinuousMode ? "듣고 있습니다... (말씀하세요)" : "마이크 버튼을 눌러 연결하세요") : (isContinuousMode ? (isWakeWordMode ? "'마지야'라고 불러보세요..." : "말씀해 주세요...") : "메시지를 입력하세요...")))} className="flex-1 bg-transparent border-none text-white p-3 max-h-32 min-h-[48px] resize-none focus:ring-0 custom-scrollbar text-base disabled:cursor-not-allowed" rows={1} disabled={(isContinuousMode && isListening && !isWakeWordMode) || cooldownSeconds > 0 || isMicChecking || aiModel === 'live' || !isOnline} />
+                            <textarea ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown} placeholder={!isOnline ? "인터넷 연결이 오프라인입니다." : cooldownSeconds > 0 ? `서비스 사용량 초과. ${cooldownSeconds}초 후 이용 가능합니다.` : (isMicChecking ? "오디오 연결 중..." : (aiModel === 'live' ? (isListening ? "듣고 있습니다... (말씀하세요)" : "마이크 버튼을 눌러 연결하세요") : (isContinuousMode ? (isWakeWordMode ? "'마지야'라고 불러보세요..." : "말씀해 주세요...") : "메시지를 입력하세요...")))} className="flex-1 bg-transparent border-none text-white p-3 max-h-32 min-h-[48px] resize-none focus:ring-0 custom-scrollbar text-base disabled:cursor-not-allowed" rows={1} disabled={(isContinuousMode && isListening && !isWakeWordMode) || cooldownSeconds > 0 || isMicChecking || aiModel === 'live' || !isOnline} />
                         </div>
                         <button onClick={() => handleSendMessage()} disabled={!inputValue.trim() || isLoading || cooldownSeconds > 0 || aiModel === 'live' || !isOnline} className={`p-3 mb-1 rounded-full shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px] ${cooldownSeconds > 0 || !isOnline ? 'bg-gray-700 text-gray-400' : (aiModel === 'live' ? 'bg-gray-700 text-gray-400' : 'bg-emerald-600 text-white hover:bg-emerald-500')}`} title={aiModel === 'live' ? "Live 모드는 음성만 지원합니다" : "전송"}>
                             {cooldownSeconds > 0 ? <span className="text-xs font-bold font-mono">{cooldownSeconds}</span> : <Send size={20} />}
