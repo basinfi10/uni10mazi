@@ -76,8 +76,27 @@ const App: React.FC = () => {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isTTSActive, setIsTTSActive] = useState(false);
-    const [isListening, setIsListening] = useState(false);
-    const [isMicChecking, setIsMicChecking] = useState(false);
+    const [isListening, setIsListeningState] = useState(false);
+    const setIsListening = useCallback((val: boolean, source: string = 'unknown') => {
+        console.log(`[State] isListening: ${isListeningRef.current} -> ${val} (Source: ${source})`);
+        setIsListeningState(val);
+        isListeningRef.current = val;
+    }, []);
+
+    const [isAiSpeaking, setIsAiSpeakingState] = useState(false);
+    const setIsAiSpeaking = useCallback((val: boolean, source: string = 'unknown') => {
+        if (isAiSpeakingRef.current !== val) {
+            console.log(`[State] isAiSpeaking: ${isAiSpeakingRef.current} -> ${val} (Source: ${source})`);
+        }
+        setIsAiSpeakingState(val);
+        isAiSpeakingRef.current = val;
+    }, []);
+
+    const [isMicChecking, setIsMicCheckingState] = useState(false);
+    const setIsMicChecking = useCallback((val: boolean) => {
+        console.log(`[State] isMicChecking changed to ${val}`);
+        setIsMicCheckingState(val);
+    }, []);
     const [isMicInputDetected, setIsMicInputDetected] = useState(false);
     const [isContinuousMode, setIsContinuousMode] = useState(false);
     const [currentVoice, setCurrentVoice] = useState('Kore');
@@ -124,7 +143,6 @@ const App: React.FC = () => {
     const [isServiceMenuMinimized, setIsServiceMenuMinimized] = useState(false);
     const [isDrillMode, setIsDrillMode] = useState(false);
 
-    const [isAiSpeaking, setIsAiSpeaking] = useState(false);
     const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const [ttsStatus, setTtsStatus] = useState<TTSStatus>('idle');
@@ -445,18 +463,18 @@ const App: React.FC = () => {
     }, []);
 
     const stopLiveSession = useCallback(() => {
+        console.log("[Action] stopLiveSession triggered");
         if (liveClientRef.current) {
             liveClientRef.current.disconnect();
             liveClientRef.current = null;
         }
         stopLiveAudioStream();
-        setIsListening(false);
-        isListeningRef.current = false;
+        setIsListening(false, 'stopLiveSession');
         setIsMicInputDetected(false);
-        setIsAiSpeaking(false);
+        setIsAiSpeaking(false, 'stopLiveSession');
         setIsLiveThinking(false);
         stopAudio();
-    }, [stopLiveAudioStream]);
+    }, [stopLiveAudioStream, setIsListening, setIsAiSpeaking, setIsLiveThinking]);
 
     const startLiveAudioStream = useCallback(async (client: LiveClient) => {
         try {
@@ -603,13 +621,12 @@ const App: React.FC = () => {
             const client = new LiveClient();
             liveClientRef.current = client;
             
-            setIsListening(true);
-            isListeningRef.current = true;
+            setIsListening(true, 'startLiveSession');
             await client.connect(
                 (base64PCM) => {
                     // Instance check
                     if (liveClientRef.current !== client) return;
-                    setIsAiSpeaking(true);
+                    setIsAiSpeaking(true, 'LiveClient.onAudioData');
                     setIsLiveThinking(false);
                     playPCMChunk(base64PCM);
                 },
@@ -622,8 +639,8 @@ const App: React.FC = () => {
                     
                     // [FIX] Guard: If we just connected, don't allow a silent disconnect to kill the state immediately
                     // This handles cases where the socket might flicker or send an early close.
-                    setIsListening(false);
-                    setIsAiSpeaking(false);
+                    setIsListening(false, 'LiveClient.onDisconnect');
+                    setIsAiSpeaking(false, 'LiveClient.onDisconnect');
                     setIsLiveThinking(false);
                     
                     if (err) {
@@ -636,6 +653,7 @@ const App: React.FC = () => {
             );
             try {
                 await startLiveAudioStream(client);
+                console.log("[LiveSession] Stream started, showing success toast");
                 showToast("Live 세션이 연결되었습니다. 말씀하세요.");
             } catch (micErr: any) {
                 console.warn("Initial mic capture failed:", micErr);
@@ -708,12 +726,12 @@ const App: React.FC = () => {
             recognition.lang = 'ko-KR';
             recognitionRef.current = recognition;
             recognition.onstart = () => { 
-                if (aiModelRef.current === 'standard') setIsListening(true); 
+                if (aiModelRef.current === 'standard') setIsListening(true, 'Recognition.onstart'); 
             };
             recognition.onend = () => {
                 // [FIX] Double guard: only act if we are STILL in standard mode
                 if (aiModel === 'standard' && aiModelRef.current === 'standard') {
-                    setIsListening(false);
+                    setIsListening(false, 'Recognition.onend');
                     setIsMicInputDetected(false);
                     if ((isContinuousModeRef.current || isWakeWordModeRef.current) && !isAiSpeakingRef.current) {
                         setTimeout(() => { 
@@ -752,7 +770,7 @@ const App: React.FC = () => {
                 if (aiModelRef.current !== 'standard') return;
                 
                 if (event.error === 'not-allowed') {
-                    setIsListening(false);
+                    setIsListening(false, 'Recognition.onerror');
                     showToast("마이크 권한이 차단되었습니다.", 'error');
                 }
             };
