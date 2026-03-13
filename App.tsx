@@ -652,35 +652,10 @@ const App: React.FC = () => {
         if (hasAutoStartedRef.current) return;
         hasAutoStartedRef.current = true;
 
-        const autoStart = async () => {
-            if (aiModelRef.current === 'live') {
-                // 1. 초기 인사 팝업 (가장 중요한 피드백)
-                showToast("안녕하세요🎵 마지입니다. 무엇을 함께 할까요?", 'info');
-
-                try {
-                    // 2. 오디오 웜업
-                    initAudioContext().catch(() => { });
-
-                    // 3. 마이크 권한 체크
-                    const hasPermission = await checkMicPermission();
-
-                    if (hasPermission) {
-                        showToast("연결을 시작합니다.", 'info');
-                        startLiveSession();
-                    } else {
-                        // 마이크 경고 팝업
-                        showToast("마이크가 켜지지 않았습니다. 대화를 원하시면 마이크를 켜세요", 'error');
-                        startLiveSession();
-                    }
-                } catch (err) {
-                    console.error("AutoStart sequence failed:", err);
-                }
-            }
-        };
-
-        // 앱 초기화 후 약간의 지연을 두고 Live 세션 자동 시작
-        setTimeout(autoStart, 1000);
-    }, [startLiveSession]);
+        // [MOD] Removed auto-activation of mic to prevent browser state conflicts.
+        // Only show greeting on start.
+        showToast("안녕하세요🎵 마지입니다. 무엇을 함께 할까요?", 'info');
+    }, []);
 
     const startRecognitionSafe = useCallback(() => {
         if (!recognitionRef.current) return;
