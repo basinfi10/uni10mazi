@@ -615,15 +615,21 @@ const App: React.FC = () => {
                 },
                 (err) => {
                     // [CRITICAL FIX] Instance Guard: Only stop if this is the ACTIVE client.
-                    // Stale disconnect callbacks from previous sessions will no longer kill the new session.
                     if (liveClientRef.current !== client) {
                         console.log("[LiveClient] Ignoring disconnect from stale session");
                         return;
                     }
+                    
+                    // [FIX] Guard: If we just connected, don't allow a silent disconnect to kill the state immediately
+                    // This handles cases where the socket might flicker or send an early close.
                     setIsListening(false);
                     setIsAiSpeaking(false);
                     setIsLiveThinking(false);
-                    if (err) showToast(err.message || "Live 연결이 끊어졌습니다.", 'error');
+                    
+                    if (err) {
+                        console.error("[LiveClient] Disconnect with error:", err);
+                        showToast(err.message || "Live 연결이 끊어졌습니다.", 'error');
+                    }
                     stopLiveSession();
                 },
                 handleLiveTranscript
@@ -701,13 +707,20 @@ const App: React.FC = () => {
             recognition.interimResults = true;
             recognition.lang = 'ko-KR';
             recognitionRef.current = recognition;
-            recognition.onstart = () => { if (aiModelRef.current === 'standard') setIsListening(true); };
+            recognition.onstart = () => { 
+                if (aiModelRef.current === 'standard') setIsListening(true); 
+            };
             recognition.onend = () => {
-                if (aiModelRef.current === 'standard') {
+                // [FIX] Double guard: only act if we are STILL in standard mode
+                if (aiModel === 'standard' && aiModelRef.current === 'standard') {
                     setIsListening(false);
                     setIsMicInputDetected(false);
                     if ((isContinuousModeRef.current || isWakeWordModeRef.current) && !isAiSpeakingRef.current) {
-                        setTimeout(() => { try { recognition.start(); } catch (e) { } }, 1000);
+                        setTimeout(() => { 
+                            if (aiModelRef.current === 'standard') {
+                                try { recognition.start(); } catch (e) { } 
+                            }
+                        }, 1000);
                     }
                 }
             };
@@ -735,6 +748,9 @@ const App: React.FC = () => {
                 }
             };
             recognition.onerror = (event: any) => {
+                // [FIX] Guard: ignore errors if not in standard mode
+                if (aiModelRef.current !== 'standard') return;
+                
                 if (event.error === 'not-allowed') {
                     setIsListening(false);
                     showToast("마이크 권한이 차단되었습니다.", 'error');
@@ -1085,14 +1101,25 @@ const App: React.FC = () => {
     };
 
     const handleAiModelChange = (model: AIModelType) => {
+        // [CRITICAL] Synchronously update ref to avoid race conditions in callbacks
+        aiModelRef.current = model;
         setAiModel(model);
+        
         setIsContinuousMode(false);
         setIsListening(false);
         stopLiveSession();
-        try { recognitionRef.current?.abort(); } catch (e) { }
+        
+        try { 
+            recognitionRef.current?.abort(); 
+        } catch (e) { }
+        
         startNewAudioSession();
         setIsWakeWordMode(false);
-        if (model === 'live') setTimeout(() => startLiveSession(), 500);
+        
+        if (model === 'live') {
+            // [FIX] Slightly longer delay to ensure hardware is released and state transition is complete
+            setTimeout(() => startLiveSession(), 800);
+        }
         showToast(`AI 엔진이 ${model === 'standard' ? 'Standard' : 'Live'} 모드로 변경되었습니다.`);
     };
 
