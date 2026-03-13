@@ -504,6 +504,7 @@ const App: React.FC = () => {
 
             let stream: MediaStream;
             try {
+                console.log("[MicStream] Requesting microphone access...");
                 stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
             } catch (e) {
                 try {
@@ -513,14 +514,14 @@ const App: React.FC = () => {
                 }
             }
 
-            liveMediaStreamRef.current = stream;
-
-            // [FIX] Guard: If stopLiveSession was called while waiting for getUserMedia
-            if (!liveAudioContextRef.current || (liveAudioContextRef.current.state as any) === 'closed') {
+            // [CRITICAL FIX] Post-Capture Guard: If the session was closed while waiting for getUserMedia
+            if (liveClientRef.current !== client || !isListeningRef.current) {
+                console.warn("[MicStream] Session closed during mic capture. Releasing hardware.");
                 stream.getTracks().forEach(track => track.stop());
                 return;
             }
 
+            liveMediaStreamRef.current = stream;
             const source = ctx.createMediaStreamSource(stream);
             const processor = ctx.createScriptProcessor(4096, 1, 1);
             liveScriptProcessorRef.current = processor;
@@ -630,23 +631,22 @@ const App: React.FC = () => {
                     setIsLiveThinking(false);
                     playPCMChunk(base64PCM);
                 },
-                (err) => {
+                (err: any) => {
                     // [CRITICAL FIX] Instance Guard: Only stop if this is the ACTIVE client.
                     if (liveClientRef.current !== client) {
                         console.log("[LiveClient] Ignoring disconnect from stale session");
                         return;
                     }
                     
-                    // [FIX] Guard: If we just connected, don't allow a silent disconnect to kill the state immediately
-                    // This handles cases where the socket might flicker or send an early close.
+                    const code = err?.code || 'Unknown';
+                    const reason = err?.reason || 'No reason';
+                    console.error(`[LiveClient] Disconnected. Code: ${code}, Reason: ${reason}`, err);
+
                     setIsListening(false, 'LiveClient.onDisconnect');
                     setIsAiSpeaking(false, 'LiveClient.onDisconnect');
                     setIsLiveThinking(false);
                     
-                    if (err) {
-                        console.error("[LiveClient] Disconnect with error:", err);
-                        showToast(err.message || "Live 연결이 끊어졌습니다.", 'error');
-                    }
+                    showToast(`Live 연결 종료 (${code})`, 'error');
                     stopLiveSession();
                 },
                 handleLiveTranscript

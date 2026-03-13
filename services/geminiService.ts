@@ -64,16 +64,18 @@ const getAIClient = (): GoogleGenAI => {
     // 3. Fallback to user-provided key in settings
     if (!apiKey) {
       apiKey = customUserApiKey;
+      if (apiKey) console.log("[AIClient] Using user-provided API key from settings");
     }
 
     // Clean and validate
     apiKey = apiKey.trim();
 
-    // Check for "undefined" string literal which can happen in some build replacements
     if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+      console.error("[AIClient] No API Key found in Env or Settings");
       throw new Error("API 키가 설정되지 않았습니다. 설정에서 개인 API 키를 입력하거나, 서버 환경 변수(VITE_GEMINI_API_KEY)를 확인해주세요.");
     }
 
+    console.log("[AIClient] Initializing with key prefix:", apiKey.substring(0, 5) + "...");
     ai = new GoogleGenAI({ apiKey });
   }
   return ai;
@@ -464,15 +466,16 @@ export class LiveClient {
             // ...
           },
           onclose: (e: any) => {
+            console.warn("[LiveClient] WebSocket closed:", e);
             this.isConnected = false;
             this.isConnecting = false;
-            onDisconnect(new Error("Session closed"));
+            onDisconnect({ code: e.code, reason: e.reason, message: "Session closed" });
           },
           onerror: (e: any) => {
-            console.error("Live Session Error:", e);
+            console.error("[LiveClient] WebSocket error:", e);
             this.isConnected = false;
             this.isConnecting = false;
-            onDisconnect(new Error("Session error"));
+            onDisconnect({ message: "Session error", details: e });
           }
         },
         config: {
