@@ -567,8 +567,9 @@ const App: React.FC = () => {
             }
 
         } catch (e: any) {
-            showToast("마이크 오류: " + (e.message || "알 수 없는 오류"), 'error');
+            console.error("Mic Stream Error:", e);
             stopLiveSession();
+            throw e; // [FIX] Re-throw to inform startLiveSession of failure
         }
     }, [stopLiveSession, showToast]);
 
@@ -1160,7 +1161,7 @@ const App: React.FC = () => {
                         {messages.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                 <div className="mb-6"><MaziLogo /></div>
-                                <span className="text-[10px] text-gray-500 font-medium">v2.30</span>
+                                <span className="text-[10px] text-gray-500 font-medium">v2.10</span>
                                 <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                 <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                             </div>
