@@ -17,7 +17,7 @@ export const setUserApiKey = (key: string) => {
 
 const MODEL_NAME = 'gemini-2.0-flash';
 const TTS_MODEL_NAME = 'gemini-2.0-flash-lite-preview-0925'; 
-const LIVE_MODEL_NAME = 'gemini-2.0-flash';
+const LIVE_MODEL_NAME = 'gemini-2.0-flash-exp';
 
 const DEFAULT_SYSTEM_INSTRUCTION = `
 당신의 이름은 '마지(Mazi)'입니다.
@@ -75,7 +75,8 @@ const getAIClient = (): GoogleGenAI => {
     }
 
     console.log("[AIClient] Initializing with key prefix:", apiKey.substring(0, 5) + "...");
-    ai = new GoogleGenAI({ apiKey });
+    // [CRITICAL] Specify v1beta for Multimodal Live API support
+    ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
   }
   return ai;
 };
