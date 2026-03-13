@@ -467,7 +467,7 @@ const App: React.FC = () => {
             }
 
             // [FIX] Guard: If context was closed while waiting for resume or previous cleanup
-            if (ctx.state === 'closed') return;
+            if ((ctx.state as any) === 'closed') return;
 
             const constraints: MediaTrackConstraints = {
                 channelCount: 1,
@@ -490,7 +490,7 @@ const App: React.FC = () => {
             liveMediaStreamRef.current = stream;
 
             // [FIX] Guard: If stopLiveSession was called while waiting for getUserMedia
-            if (!liveAudioContextRef.current || liveAudioContextRef.current.state === 'closed') {
+            if (!liveAudioContextRef.current || (liveAudioContextRef.current.state as any) === 'closed') {
                 stream.getTracks().forEach(track => track.stop());
                 return;
             }
@@ -553,8 +553,8 @@ const App: React.FC = () => {
 
             source.connect(processor);
             
-            // [FIX] Guard: Final check before connecting to destination
-            if (ctx.state !== 'closed') {
+            // [FIX] Guard: Final check before connecting to destination (Cast to any for TS compatibility)
+            if ((ctx.state as any) !== 'closed') {
                 processor.connect(ctx.destination);
             }
 
