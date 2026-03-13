@@ -512,7 +512,16 @@ const App: React.FC = () => {
             let frameCount = 0;
 
             processor.onaudioprocess = (e) => {
-                if (!liveClientRef.current) return;
+                // [FIX] Instance Guard: If this is a stale context (after session change), do nothing
+                if (liveClientRef.current !== client) {
+                    try {
+                        source.disconnect();
+                        processor.disconnect();
+                        console.log("[MicStream] Stale processor disconnected");
+                    } catch (err) {}
+                    return;
+                }
+
                 const inputData = e.inputBuffer.getChannelData(0);
                 const currentSampleRate = e.inputBuffer.sampleRate;
 
@@ -598,11 +607,19 @@ const App: React.FC = () => {
             isListeningRef.current = true;
             await client.connect(
                 (base64PCM) => {
+                    // Instance check
+                    if (liveClientRef.current !== client) return;
                     setIsAiSpeaking(true);
                     setIsLiveThinking(false);
                     playPCMChunk(base64PCM);
                 },
                 (err) => {
+                    // [CRITICAL FIX] Instance Guard: Only stop if this is the ACTIVE client.
+                    // Stale disconnect callbacks from previous sessions will no longer kill the new session.
+                    if (liveClientRef.current !== client) {
+                        console.log("[LiveClient] Ignoring disconnect from stale session");
+                        return;
+                    }
                     setIsListening(false);
                     setIsAiSpeaking(false);
                     setIsLiveThinking(false);
@@ -1121,7 +1138,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.05
+                                MAZI AI v2.10
                             </h1>
                         </div>
                     </div>
