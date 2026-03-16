@@ -282,6 +282,7 @@ const App: React.FC = () => {
             }
 
             setCurrentSessionId(null);
+            console.log("MAZI AI v2.23 (TTS Engine Selector) Loaded Successfully.");
         } catch (e) {
             console.error("Failed to load history/settings", e);
         }
@@ -814,7 +815,7 @@ const App: React.FC = () => {
         stopAudio();
         setPlayingMessageId(messageId);
 
-        // 1. Browser Native TTS Engine (v2.22)
+        // 1. Browser Native TTS Engine (v2.23)
         if (audioSettings.ttsEngine === 'browser') {
             if (typeof window !== 'undefined' && window.speechSynthesis) {
                 const utterance = new SpeechSynthesisUtterance(text);
