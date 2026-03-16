@@ -209,6 +209,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
 
+                {/* Browser TTS Language Setting (v2.25) */}
+                <div className="mt-4">
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <Activity size={14} />
+                        브라우저 음성 언어
+                    </h3>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={() => onAudioSettingsChange({ ...audioSettings, browserTtsLang: 'ko-KR' })}
+                            className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                            audioSettings.browserTtsLang === 'ko-KR' 
+                            ? 'bg-blue-900/20 border-blue-500 text-blue-400' 
+                            : 'bg-[#2a2a2a] border-gray-700 text-gray-400 hover:bg-[#333]'
+                            }`}
+                        >
+                            한국어 (ko-KR)
+                        </button>
+                        <button 
+                            onClick={() => onAudioSettingsChange({ ...audioSettings, browserTtsLang: 'en-US' })}
+                            className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                            audioSettings.browserTtsLang === 'en-US' 
+                            ? 'bg-blue-900/20 border-blue-500 text-blue-400' 
+                            : 'bg-[#2a2a2a] border-gray-700 text-gray-400 hover:bg-[#333]'
+                            }`}
+                        >
+                            English (en-US)
+                        </button>
+                    </div>
+                </div>
+
                 {/* Voice Setting */}
                 <div>
                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">

@@ -43,4 +43,5 @@ export interface AudioSettings {
   visualizerType: VisualizerType;
   showDebugInfo: boolean; // v1.9.0 New: Toggle debug overlay
   ttsEngine: 'gemini' | 'browser'; // v2.24 New: Choose between high-quality API and fast Browser TTS
+  browserTtsLang: 'ko-KR' | 'en-US'; // v2.25 New: Choose language for browser-native TTS
 }

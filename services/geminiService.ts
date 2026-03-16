@@ -158,7 +158,7 @@ export const sendMessageStream = async (
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Strip emojis and non-standard chars that might confuse TTS
-const cleanTextForTTS = (text: string): string => {
+export const cleanTextForTTS = (text: string): string => {
   if (!text) return "";
 
   let cleaned = text;

@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Mic, Menu, Sparkles, Volume2, VolumeX, MicOff, AlertCircle, Loader2, AudioLines, MessageCircle, Zap, WifiOff, Radio, LayoutGrid, ChevronUp } from 'lucide-react';
 import { Message, Source, ChatSession, AudioSettings } from './types';
-import { initializeChat, sendMessageStream, generateSpeech, LiveClient, setUserApiKey } from './services/geminiService';
+import { initializeChat, sendMessageStream, generateSpeech, LiveClient, setUserApiKey, cleanTextForTTS } from './services/geminiService';
 import { stopAudio, enqueueAudio, enqueueSilence, clearAudioQueue, setPlayStateCallback, resetPCMStream, initAudioContext, setAudioErrorCallback, getAudioContextState, playWakeSound, playPCMChunk, getAudioContext, setSmartTVMode, setGlobalOutputSampleRate, resetAudioContext, downloadWav, setGlobalOutputVolume, setDigitalLimiterEnabled } from './utils/audio';
 import MessageBubble from './components/MessageBubble';
 import TypingIndicator from './components/TypingIndicator';
@@ -124,7 +124,8 @@ const App: React.FC = () => {
         micThreshold: 0.01,
         visualizerType: 'circle',
         showDebugInfo: true,
-        ttsEngine: 'gemini'
+        ttsEngine: 'gemini',
+        browserTtsLang: 'ko-KR'
     });
 
     const [userVolume, setUserVolume] = useState(0);
@@ -282,7 +283,7 @@ const App: React.FC = () => {
             }
 
             setCurrentSessionId(null);
-            console.log("MAZI AI v2.24 (Stability Patch) Loaded Successfully.");
+            console.log("MAZI AI v2.25 (Enhanced Browser TTS) Loaded Successfully.");
         } catch (e) {
             console.error("Failed to load history/settings", e);
         }
@@ -815,11 +816,14 @@ const App: React.FC = () => {
         stopAudio();
         setPlayingMessageId(messageId);
 
-        // 1. Browser Native TTS Engine (v2.24)
+        // 1. Browser Native TTS Engine (v2.25)
         if (audioSettings.ttsEngine === 'browser') {
             if (typeof window !== 'undefined' && window.speechSynthesis) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ko-KR';
+                const cleanedText = cleanTextForTTS(text);
+                if (!cleanedText) return;
+
+                const utterance = new SpeechSynthesisUtterance(cleanedText);
+                utterance.lang = audioSettings.browserTtsLang || 'ko-KR';
                 utterance.rate = 1.0;
                 utterance.pitch = 1.0;
                 utterance.onstart = () => setIsAiSpeaking(true, 'browser-tts-start');
@@ -998,7 +1002,8 @@ const App: React.FC = () => {
             micThreshold: 0.01,
             visualizerType: 'circle',
             showDebugInfo: true,
-            ttsEngine: 'gemini'
+            ttsEngine: 'gemini',
+            browserTtsLang: 'ko-KR'
         });
         const isInit = initializeChat();
         if (!isInit) setIsConfigError(true);
@@ -1211,7 +1216,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.24
+                                MAZI AI v2.25
                             </h1>
                         </div>
                     </div>
@@ -1243,7 +1248,16 @@ const App: React.FC = () => {
                     <DebugOverlay rms={debugRms} threshold={debugThreshold} isGateOpen={debugGateOpen} isAiSpeaking={isAiSpeaking} aecEnabled={audioSettings.echoCancellation} outputVolume={audioSettings.outputVolume} outputSampleRate={audioSettings.outputSampleRate} />
                 )}
 
-                 <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#121212] relative">
+                 <main 
+                    className="flex-1 overflow-y-auto p-4 custom-scrollbar relative"
+                    style={{ 
+                        backgroundColor: '#121212',
+                        backgroundImage: 'url("/bg_pattern.png")',
+                        backgroundSize: '400px',
+                        backgroundRepeat: 'repeat',
+                        backgroundBlendMode: 'overlay'
+                    }}
+                  >
                     {isSidebarOpen && <div className="absolute inset-0 z-10 md:hidden bg-transparent" onClick={() => setIsSidebarOpen(false)} />}
                     
                     {/* Message list - rendered always to show greeting and history */}
@@ -1251,7 +1265,7 @@ const App: React.FC = () => {
                         {messages.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                 <div className="mb-6"><MaziLogo /></div>
-                                <span className="text-[10px] text-gray-500 font-medium">v2.24</span>
+                                <span className="text-[10px] text-gray-500 font-medium">v2.25</span>
                                 <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                 <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                             </div>
