@@ -47,16 +47,25 @@ const MaziLogo: React.FC = () => (
           height: 50px;
           object-fit: contain;
       }
+      .mazi-logo-img-i {
+          height: 62px;
+          margin-top: -4px;
+          transform: scaleX(1.15) scaleY(1.05);
+      }
       @media (min-width: 768px) {
           .mazi-logo-img {
               height: 70px;
+          }
+          .mazi-logo-img-i {
+              height: 85px;
+              margin-top: -6px;
           }
       }
     `}</style>
         <img src="/m.png" alt="M" className="mazi-logo-img" />
         <img src="/a.png" alt="A" className="mazi-logo-img mazi-anim-A" />
         <img src="/z.png" alt="Z" className="mazi-logo-img" />
-        <img src="/i.png" alt="i" className="mazi-logo-img mazi-anim-i" />
+        <img src="/i.png" alt="i" className="mazi-logo-img mazi-anim-i mazi-logo-img-i" />
     </div>
 );
 
