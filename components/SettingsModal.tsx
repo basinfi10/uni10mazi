@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Check, History, AlertTriangle, RefreshCw, Cpu, Zap, Activity, Mic2, Settings2, PlayCircle, Zap as ZapIcon, BarChart3, Activity as WaveIcon, Circle, Cloud, CloudFog, Speaker, Bug, ShieldAlert } from 'lucide-react';
+import { X, Check, History, AlertTriangle, RefreshCw, Cpu, Zap, Activity, Mic2, Settings2, PlayCircle, Zap as ZapIcon, BarChart3, Activity as WaveIcon, Circle, Cloud, CloudFog, Speaker, Bug, ShieldAlert, Sparkles } from 'lucide-react';
 import { runAudioTest } from '../utils/audio';
 import { AudioSettings } from '../types';
 
