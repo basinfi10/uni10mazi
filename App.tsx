@@ -239,11 +239,38 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const handleTouchStart = () => {
+        const warmUpBrowserTTS = () => {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                // Pre-loading voices for mobile
+                window.speechSynthesis.getVoices();
+                
+                // One-time empty utterance to unlock audio on mobile gesture
+                const utterance = new SpeechSynthesisUtterance("");
+                utterance.volume = 0;
+                window.speechSynthesis.speak(utterance);
+                console.log("[TTS] Browser engine warmed up via user gesture.");
+            }
             initAudioContext();
         };
-        window.addEventListener('touchstart', handleTouchStart, { once: true });
-        return () => window.removeEventListener('touchstart', handleTouchStart);
+        window.addEventListener('touchstart', warmUpBrowserTTS, { once: true });
+        window.addEventListener('mousedown', warmUpBrowserTTS, { once: true });
+        return () => {
+            window.removeEventListener('touchstart', warmUpBrowserTTS);
+            window.removeEventListener('mousedown', warmUpBrowserTTS);
+        };
+    }, []);
+
+    // v2.26 New: Pre-load and listen for voice changes (critical for mobile)
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const handleVoicesChanged = () => {
+                const voices = window.speechSynthesis.getVoices();
+                console.log(`[TTS] ${voices.length} voices loaded/changed.`);
+            };
+            window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
+            // Initial call
+            window.speechSynthesis.getVoices();
+        }
     }, []);
 
     useEffect(() => {
@@ -283,7 +310,7 @@ const App: React.FC = () => {
             }
 
             setCurrentSessionId(null);
-            console.log("MAZI AI v2.25 (Enhanced Browser TTS) Loaded Successfully.");
+            console.log("MAZI AI v2.26 (Mobile TTS Fix) Loaded Successfully.");
         } catch (e) {
             console.error("Failed to load history/settings", e);
         }
@@ -816,14 +843,29 @@ const App: React.FC = () => {
         stopAudio();
         setPlayingMessageId(messageId);
 
-        // 1. Browser Native TTS Engine (v2.25)
+        // 1. Browser Native TTS Engine (v2.26)
         if (audioSettings.ttsEngine === 'browser') {
             if (typeof window !== 'undefined' && window.speechSynthesis) {
                 const cleanedText = cleanTextForTTS(text);
                 if (!cleanedText) return;
 
+                // Stop any previous speech
+                window.speechSynthesis.cancel();
+
                 const utterance = new SpeechSynthesisUtterance(cleanedText);
-                utterance.lang = audioSettings.browserTtsLang || 'ko-KR';
+                const targetLang = audioSettings.browserTtsLang || 'ko-KR';
+                utterance.lang = targetLang;
+                
+                // Mobile fix: Explicitly find and set the voice if lang-based match fails
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    const matchedVoice = voices.find(v => v.lang.includes(targetLang) || v.lang.replace('_', '-') === targetLang);
+                    if (matchedVoice) {
+                        utterance.voice = matchedVoice;
+                        console.log(`[TTS] Using voice: ${matchedVoice.name} (${matchedVoice.lang})`);
+                    }
+                }
+
                 utterance.rate = 1.0;
                 utterance.pitch = 1.0;
                 utterance.onstart = () => setIsAiSpeaking(true, 'browser-tts-start');
@@ -831,11 +873,16 @@ const App: React.FC = () => {
                     setIsAiSpeaking(false, 'browser-tts-end');
                     setPlayingMessageId(null);
                 };
-                utterance.onerror = () => {
+                utterance.onerror = (e) => {
+                    console.error("[TTS] Browser Error:", e);
                     setIsAiSpeaking(false, 'browser-tts-error');
                     setPlayingMessageId(null);
                 };
-                window.speechSynthesis.speak(utterance);
+                
+                // Some Android versions need a small delay after cancel()
+                setTimeout(() => {
+                    window.speechSynthesis.speak(utterance);
+                }, 50);
             }
             return;
         }
@@ -1216,7 +1263,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.25
+                                MAZI AI v2.26
                             </h1>
                         </div>
                     </div>
@@ -1265,7 +1312,7 @@ const App: React.FC = () => {
                         {messages.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                 <div className="mb-6"><MaziLogo /></div>
-                                <span className="text-[10px] text-gray-500 font-medium">v2.25</span>
+                                <span className="text-[10px] text-gray-500 font-medium">v2.26</span>
                                 <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                 <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                             </div>
