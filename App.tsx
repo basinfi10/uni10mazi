@@ -24,9 +24,9 @@ import { ServiceItem, LIVE_PERSONAS } from './components/Service_Prompts';
 export type TTSStatus = 'idle' | 'loading' | 'playing' | 'suspended' | 'error';
 type AIModelType = 'standard' | 'live';
 
-// --- INLINE LOGO COMPONENT (Text & CSS Transform & Animation) ---
+// --- INLINE LOGO COMPONENT (Image Version with Animations) ---
 const MaziLogo: React.FC = () => (
-    <div className="flex items-baseline justify-center select-none cursor-default transform scale-x-[1.35] origin-center" aria-label="MAZI Logo">
+    <div className="flex items-center justify-center select-none cursor-default gap-1" aria-label="MAZI Logo">
         <style>{`
       @keyframes mazi-float-high {
         0%, 100% { transform: translateY(0px); }
@@ -43,27 +43,20 @@ const MaziLogo: React.FC = () => (
         animation: mazi-float-normal 2.8s ease-in-out infinite;
         animation-delay: 1.4s;
       }
+      .mazi-logo-img {
+          height: 50px;
+          object-fit: contain;
+      }
+      @media (min-width: 768px) {
+          .mazi-logo-img {
+              height: 70px;
+          }
+      }
     `}</style>
-
-        <span className="text-[6.2rem] md:text-[8.4rem] font-black bg-gradient-to-br from-cyan-300 via-cyan-500 to-blue-600 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(6,182,212,0.6)] transform scale-x-[0.75] translate-x-[2px] origin-center -mr-2 md:-mr-4" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.05em' }}>
-            m
-        </span>
-
-        <span className="mazi-anim-A inline-block mx-0">
-            <span className="text-7xl md:text-8xl font-black text-yellow-200 drop-shadow-[0_0_25px_rgba(253,224,71,1)] inline-block transform rotate-180 relative translate-y-0 md:translate-y-0.5" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.05em', lineHeight: '1' }}>
-                V
-            </span>
-        </span>
-
-        <span className="text-7xl md:text-8xl font-black bg-gradient-to-br from-cyan-300 via-cyan-500 to-blue-600 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(6,182,212,0.6)] -ml-1.5 md:-ml-3" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.05em' }}>
-            Z
-        </span>
-
-        <span className="mazi-anim-i inline-block -ml-1 md:-ml-2.5">
-            <span className="text-[6.2rem] md:text-[8.4rem] font-black text-yellow-200 drop-shadow-[0_0_25px_rgba(253,224,71,1)]" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.05em' }}>
-                i
-            </span>
-        </span>
+        <img src="/m.png" alt="M" className="mazi-logo-img" />
+        <img src="/a.png" alt="A" className="mazi-logo-img mazi-anim-A" />
+        <img src="/z.png" alt="Z" className="mazi-logo-img" />
+        <img src="/i.png" alt="i" className="mazi-logo-img mazi-anim-i" />
     </div>
 );
 
