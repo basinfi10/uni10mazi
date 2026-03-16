@@ -48,17 +48,17 @@ const MaziLogo: React.FC = () => (
           object-fit: contain;
       }
       .mazi-logo-img-i {
-          height: 62px;
-          margin-top: -4px;
-          transform: scaleX(1.15) scaleY(1.05);
+          height: 78px;
+          margin-top: -6px;
+          transform: scaleX(1.2) scaleY(1.05);
       }
       @media (min-width: 768px) {
           .mazi-logo-img {
               height: 70px;
           }
           .mazi-logo-img-i {
-              height: 85px;
-              margin-top: -6px;
+              height: 106px;
+              margin-top: -8px;
           }
       }
     `}</style>
@@ -1185,7 +1185,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.21
+                                MAZI AI v2.22
                             </h1>
                         </div>
                     </div>
@@ -1225,7 +1225,7 @@ const App: React.FC = () => {
                         {messages.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                 <div className="mb-6"><MaziLogo /></div>
-                                <span className="text-[10px] text-gray-500 font-medium">v2.10</span>
+                                <span className="text-[10px] text-gray-500 font-medium">v2.22</span>
                                 <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                 <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                             </div>

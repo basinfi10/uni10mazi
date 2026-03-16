@@ -415,9 +415,6 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
           <Settings size={16} />
           설정
         </button>
-        <div className="pt-2 text-[10px] text-gray-600 text-center">
-          v2.10
-        </div>
       </div>
     </aside>
   );
