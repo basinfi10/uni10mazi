@@ -123,7 +123,8 @@ const App: React.FC = () => {
         autoGainControl: true,
         micThreshold: 0.01,
         visualizerType: 'circle',
-        showDebugInfo: true
+        showDebugInfo: true,
+        ttsEngine: 'gemini'
     });
 
     const [userVolume, setUserVolume] = useState(0);
@@ -812,6 +813,29 @@ const App: React.FC = () => {
         if (isAudioLoading) return;
         stopAudio();
         setPlayingMessageId(messageId);
+
+        // 1. Browser Native TTS Engine (v2.22)
+        if (audioSettings.ttsEngine === 'browser') {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ko-KR';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.onstart = () => setIsAiSpeaking(true, 'browser-tts-start');
+                utterance.onend = () => {
+                    setIsAiSpeaking(false, 'browser-tts-end');
+                    setPlayingMessageId(null);
+                };
+                utterance.onerror = () => {
+                    setIsAiSpeaking(false, 'browser-tts-error');
+                    setPlayingMessageId(null);
+                };
+                window.speechSynthesis.speak(utterance);
+            }
+            return;
+        }
+
+        // 2. Gemini API TTS Engine (High Quality)
         const targetMsg = messages.find(m => m.id === messageId);
         if (targetMsg && targetMsg.audioData) {
             enqueueAudio(targetMsg.audioData);
@@ -828,7 +852,7 @@ const App: React.FC = () => {
         } finally {
             setIsAudioLoading(false);
         }
-    }, [currentVoice, isAudioLoading, messages, showToast]);
+    }, [audioSettings.ttsEngine, currentVoice, isAudioLoading, messages, showToast, setIsAiSpeaking]);
 
     const handleManualPlay = (text: string, id: string) => playTTS(text, id);
     const handleManualStop = () => {
@@ -972,7 +996,8 @@ const App: React.FC = () => {
             autoGainControl: true,
             micThreshold: 0.01,
             visualizerType: 'circle',
-            showDebugInfo: true
+            showDebugInfo: true,
+            ttsEngine: 'gemini'
         });
         const isInit = initializeChat();
         if (!isInit) setIsConfigError(true);

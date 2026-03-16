@@ -168,10 +168,51 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
 
+                {/* TTS Engine Setting */}
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <ZapIcon size={14} />
+                        음성 재생 엔진 (Standard 모드)
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button 
+                            onClick={() => updateAudioSetting('ttsEngine', 'gemini')}
+                            className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            audioSettings.ttsEngine === 'gemini' 
+                            ? 'bg-emerald-900/20 border-emerald-500 text-emerald-400' 
+                            : 'bg-[#2a2a2a] border-gray-700 text-gray-400 hover:bg-[#333]'
+                            }`}
+                        >
+                            <Sparkles size={20} />
+                            <div className="text-center">
+                                <span className="block text-sm font-bold">Gemini AI</span>
+                                <span className="block text-[10px] opacity-70">고품질 / 느림(약 3초)</span>
+                            </div>
+                            {audioSettings.ttsEngine === 'gemini' && <Check size={16} className="mt-1" />}
+                        </button>
+
+                        <button 
+                            onClick={() => updateAudioSetting('ttsEngine', 'browser')}
+                            className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            audioSettings.ttsEngine === 'browser' 
+                            ? 'bg-blue-900/20 border-blue-500 text-blue-400' 
+                            : 'bg-[#2a2a2a] border-gray-700 text-gray-400 hover:bg-[#333]'
+                            }`}
+                        >
+                            <Cpu size={20} />
+                            <div className="text-center">
+                                <span className="block text-sm font-bold">브라우저 엔진</span>
+                                <span className="block text-[10px] opacity-70">표준 / 즉시 재생(빠름)</span>
+                            </div>
+                            {audioSettings.ttsEngine === 'browser' && <Check size={16} className="mt-1" />}
+                        </button>
+                    </div>
+                </div>
+
                 {/* Voice Setting */}
                 <div>
                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                    음성 선택 (Standard 모드용)
+                    음성 선택 (Gemini AI 전용)
                     </h3>
                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                     {VOICES.map((voice) => (

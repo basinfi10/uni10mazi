@@ -379,6 +379,12 @@ export const isAudioPlaying = () => {
   return isPlaying;
 };
 
+export const stopNativeTTS = () => {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+};
+
 export const stopAudio = () => {
   if (currentSource) {
     try {
@@ -403,6 +409,8 @@ export const stopAudio = () => {
       clearTimeout(pcmFlushTimer);
       pcmFlushTimer = null;
   }
+
+  stopNativeTTS();
 
   setPlayingState(false);
   isProcessingNext = false;

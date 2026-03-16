@@ -42,4 +42,5 @@ export interface AudioSettings {
   micThreshold: number; // 0.005 (Sensitive) ~ 0.05 (Loud env)
   visualizerType: VisualizerType;
   showDebugInfo: boolean; // v1.9.0 New: Toggle debug overlay
+  ttsEngine: 'gemini' | 'browser'; // v2.22 New: Choose between high-quality API and fast Browser TTS
 }
