@@ -149,8 +149,21 @@ const App: React.FC = () => {
 
     const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isBrowserVoiceAvailable, setIsBrowserVoiceAvailable] = useState<boolean | null>(null); // null: checking, false: not supported, true: supported
+    
+    // v2.27 New: Check if browser voices are actually available (Tizen/WebOS Fix)
+    const checkBrowserVoices = useCallback(() => {
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                setIsBrowserVoiceAvailable(true);
+                return true;
+            }
+        }
+        return false;
+    }, []);
     const [ttsStatus, setTtsStatus] = useState<TTSStatus>('idle');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -266,10 +279,28 @@ const App: React.FC = () => {
             const handleVoicesChanged = () => {
                 const voices = window.speechSynthesis.getVoices();
                 console.log(`[TTS] ${voices.length} voices loaded/changed.`);
+                if (voices.length > 0) {
+                    setIsBrowserVoiceAvailable(true);
+                } else {
+                    setIsBrowserVoiceAvailable(false);
+                }
             };
             window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
-            // Initial call
-            window.speechSynthesis.getVoices();
+            
+            // Initial check
+            const initialVoices = window.speechSynthesis.getVoices();
+            if (initialVoices.length > 0) {
+                setIsBrowserVoiceAvailable(true);
+            } else {
+                // Some browsers return empty first, then fire onvoiceschanged
+                // We'll wait a bit before concluding it's not supported
+                setTimeout(() => {
+                    const retryVoices = window.speechSynthesis.getVoices();
+                    if (retryVoices.length === 0) setIsBrowserVoiceAvailable(false);
+                }, 2000);
+            }
+        } else {
+            setIsBrowserVoiceAvailable(false);
         }
     }, []);
 
@@ -310,7 +341,7 @@ const App: React.FC = () => {
             }
 
             setCurrentSessionId(null);
-            console.log("MAZI AI v2.26 (Mobile TTS Fix) Loaded Successfully.");
+            console.log("MAZI AI v2.27 (Smart TV Fallback) Loaded Successfully.");
         } catch (e) {
             console.error("Failed to load history/settings", e);
         }
@@ -843,9 +874,17 @@ const App: React.FC = () => {
         stopAudio();
         setPlayingMessageId(messageId);
 
-        // 1. Browser Native TTS Engine (v2.26)
+        // 1. Browser Native TTS Engine (v2.27)
         if (audioSettings.ttsEngine === 'browser') {
-            if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const voices = typeof window !== 'undefined' && window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+            
+            // Fallback to Gemini if no voices or unsupported (Tizen/WebOS)
+            if (!window.speechSynthesis || voices.length === 0) {
+                console.warn("[TTS] Browser engine unavailable or no voices found. Falling back to Gemini AI.");
+                // We don't return here, we let it flow to the Gemini logic below
+                // But we should notify the user once
+                showToast("현재 기기(Smart TV 등)에서 브라우저 음성을 지원하지 않아 고품질 AI 음성으로 자동 전환합니다.", "info");
+            } else {
                 const cleanedText = cleanTextForTTS(text);
                 if (!cleanedText) return;
 
@@ -1263,7 +1302,7 @@ const App: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent flex items-center gap-2">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                MAZI AI v2.26
+                                MAZI AI v2.27
                             </h1>
                         </div>
                     </div>
@@ -1312,7 +1351,7 @@ const App: React.FC = () => {
                         {messages.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 opacity-60 mt-10 md:mt-0">
                                 <div className="mb-6"><MaziLogo /></div>
-                                <span className="text-[10px] text-gray-500 font-medium">v2.26</span>
+                                <span className="text-[10px] text-gray-500 font-medium">v2.27</span>
                                 <p className="text-lg font-medium mb-2">좋은 시간 함께 해요</p>
                                 <p className="text-sm text-center max-w-xs">다양한 작업을 도와드립니다</p>
                             </div>
@@ -1373,7 +1412,21 @@ const App: React.FC = () => {
                     </div>
                 </div>
                 {toast && <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-xl border text-sm animate-in fade-in slide-in-from-top-2 z-50 ${toast.type === 'error' ? 'bg-red-900/90 border-red-800 text-white' : 'bg-gray-800/90 border-gray-700 text-white'}`}>{toast.message}</div>}
-                <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} selectedVoice={currentVoice} onVoiceChange={setCurrentVoice} isHistoryEnabled={isHistoryEnabled} onHistoryEnabledChange={setIsHistoryEnabled} apiKey={userApiKey} onApiKeyChange={setUserApiKeyLocal} aiModel={aiModel} onAiModelChange={handleAiModelChange} audioSettings={audioSettings} onAudioSettingsChange={setAudioSettings} />
+                <SettingsModal 
+                    isOpen={isSettingsOpen} 
+                    onClose={() => setIsSettingsOpen(false)} 
+                    selectedVoice={currentVoice} 
+                    onVoiceChange={setCurrentVoice} 
+                    isHistoryEnabled={isHistoryEnabled} 
+                    onHistoryEnabledChange={setIsHistoryEnabled} 
+                    apiKey={userApiKey} 
+                    onApiKeyChange={setUserApiKeyLocal} 
+                    aiModel={aiModel} 
+                    onAiModelChange={handleAiModelChange} 
+                    audioSettings={audioSettings} 
+                    onAudioSettingsChange={setAudioSettings} 
+                    isBrowserVoiceAvailable={isBrowserVoiceAvailable}
+                />
             </div>
         </div>
     );

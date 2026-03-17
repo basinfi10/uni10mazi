@@ -17,6 +17,7 @@ interface SettingsModalProps {
   onAiModelChange: (model: 'standard' | 'live') => void;
   audioSettings: AudioSettings;
   onAudioSettingsChange: (settings: AudioSettings) => void;
+  isBrowserVoiceAvailable: boolean | null;
 }
 
 const VOICES = [
@@ -39,7 +40,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   aiModel,
   onAiModelChange,
   audioSettings,
-  onAudioSettingsChange
+  onAudioSettingsChange,
+  isBrowserVoiceAvailable
 }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'audio'>('general');
   const [testPlaying, setTestPlaying] = useState<'sine' | 'pulse' | null>(null);
@@ -201,8 +203,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         >
                             <Cpu size={20} />
                             <div className="text-center">
-                                <span className="block text-sm font-bold">브라우저 엔진</span>
-                                <span className="block text-[10px] opacity-70">표준 / 즉시 재생(빠름)</span>
+                                <div className="flex items-center justify-center gap-1">
+                                    <span className="block text-sm font-bold">브라우저 엔진</span>
+                                    {isBrowserVoiceAvailable === true && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1 rounded border border-blue-500/30">Beta</span>}
+                                </div>
+                                <span className="block text-[10px] opacity-70">
+                                    {isBrowserVoiceAvailable === null && "지원 여부 확인 중..."}
+                                    {isBrowserVoiceAvailable === false && "⚠️ 현재 기기 미지원"}
+                                    {isBrowserVoiceAvailable === true && "표준 / 즉시 재생(빠름)"}
+                                </span>
                             </div>
                             {audioSettings.ttsEngine === 'browser' && <Check size={16} className="mt-1" />}
                         </button>
